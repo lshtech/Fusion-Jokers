@@ -6,6 +6,8 @@
 --- BADGE_COLOUR: B26CBB
 --- PRIORITY: -10000
 --- PREFIX: fuse
+--- DEPENDENCIES: [Steamodded>=1.0.0~ALPHA-1307d]
+--- CONFLICTS: [Talisman<=2.0]
 ----------------------------------------------
 ------------MOD CODE -------------------------
 
@@ -114,6 +116,10 @@ function FusionJokers.fusions:add_fusion(joker1, carry_stat1, extra1, joker2, ca
 end
 
 local to_number = to_number or function(num)
+	return num
+end
+
+local to_big = to_big or function(num)
 	return num
 end
 
@@ -545,11 +551,11 @@ function SMODS.INIT.FusionJokers()
 	function SMODS.Jokers.j_diamond_bard.calculate(card, context)
 		if context.individual and context.cardarea == G.play and
 		context.other_card:is_suit('Diamonds') then
-			G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + card.ability.extra.money
+			G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + to_big(card.ability.extra.money)
 			G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
 			return {
 				dollars = card.ability.extra.money,
-				mult = card.ability.extra.mult * (1 + math.floor(G.GAME.dollars / card.ability.extra.money_threshold)),
+				mult = card.ability.extra.mult * (1 + math.floor(to_number(G.GAME.dollars) / card.ability.extra.money_threshold)),
 				card = card
 			}
 		end
@@ -710,7 +716,7 @@ function SMODS.INIT.FusionJokers()
 	end
 
 	function SMODS.Jokers.j_big_bang.calculate(card, context)
-		if context.cardarea == G.jokers and not context.after and not context.before and context.scoring_name then
+		if context.cardarea == G.jokers and context.joker_main and context.scoring_name then
 			local mult_val = 1 + card.ability.extra.Xmult * (G.GAME.hands[context.scoring_name].level + G.GAME.hands[context.scoring_name].played)
 			return {
 				message = localize{type='variable',key='a_xmult',vars={mult_val}},
@@ -745,7 +751,7 @@ function SMODS.INIT.FusionJokers()
 
 	function SMODS.Jokers.j_dynamic_duo.calculate(card, context)
 		if context.individual and context.cardarea == G.play and
-		not context.other_card:is_face() then
+		not context.other_card:is_face() and not SMODS.has_no_rank(context.other_card) then
 			return {
 				mult = card.ability.extra.mult,
 				chips = card.ability.extra.chips,
@@ -787,7 +793,7 @@ function SMODS.INIT.FusionJokers()
              end)}))
 		end
 
-		if context.cardarea == G.jokers and card.ability.mult > 0 and not context.after and not context.before then
+		if context.cardarea == G.jokers and card.ability.mult > 0 and context.joker_main then
 			return {
 				message = localize{type='variable',key='a_mult',vars={card.ability.mult}},
 				mult_mod = card.ability.mult
@@ -884,7 +890,7 @@ function SMODS.INIT.FusionJokers()
 			
 		end
 
-		if context.cardarea == G.jokers and not context.after and not context.before then
+		if context.cardarea == G.jokers and context.joker_main then
 			if card.ability.extra.side == "mult" then
 				return {
 					message = localize{type='variable',key='a_mult',vars={card.ability.extra.mult}},
@@ -990,7 +996,7 @@ function SMODS.INIT.FusionJokers()
 			end
 		end
 
-		if context.cardarea == G.jokers and not context.after and not context.before then
+		if context.cardarea == G.jokers and context.joker_main then
 			local x = 0
 			for i = 1, #G.jokers.cards do
 				if G.jokers.cards[i].ability.set == 'Joker' then x = x + 1 end
@@ -1087,7 +1093,7 @@ function SMODS.INIT.FusionJokers()
 			end
 		end
 
-		if context.cardarea == G.jokers and not context.after and not context.before then
+		if context.cardarea == G.jokers and context.joker_main then
 			local mult = card.ability.mult * G.GAME.current_round.discards_left
 			return {
 				message = localize{type='variable',key='a_mult',vars={mult}},
@@ -1180,7 +1186,7 @@ function SMODS.INIT.FusionJokers()
 			end
 		end
 
-		if context.cardarea == G.jokers and not context.before and not context.after then
+		if context.cardarea == G.jokers and context.joker_main then
 			return {
 				message = localize{type='variable',key='a_xmult',vars={card.ability.extra.total}},
 				Xmult_mod = card.ability.extra.total
